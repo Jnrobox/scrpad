@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>scrpad</title>
+  <meta name="description" content="Simple scratchpad with text and images, synced across devices.">
+  <link rel="icon" href="favicon.ico">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.snow.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <span class="brand">📝 scrpad</span>
+    <span id="status" class="status">Loading…</span>
+    <button id="settings-btn" class="btn" title="GitHub token settings">⚙ Settings</button>
+  </header>
+
+  <div id="readonly-banner" class="banner" hidden>
+    Read-only mode — add a GitHub token in ⚙ Settings to enable saving and cross-device sync.
+  </div>
+
+  <main class="sheet">
+    <div id="toolbar">
+      <span class="ql-formats">
+        <select class="ql-header" title="Text style">
+          <option value="1">Heading 1</option>
+          <option value="2">Heading 2</option>
+          <option value="3">Heading 3</option>
+          <option value="" selected>Normal</option>
+        </select>
+      </span>
+      <span class="ql-formats">
+        <button class="ql-bold"></button>
+        <button class="ql-italic"></button>
+        <button class="ql-underline"></button>
+      </span>
+      <span class="ql-formats">
+        <button class="ql-list" value="ordered"></button>
+        <button class="ql-list" value="bullet"></button>
+      </span>
+      <span class="ql-formats">
+        <button class="ql-image" title="Insert image"></button>
+      </span>
+    </div>
+    <div id="editor"></div>
+  </main>
+
+  <div id="settings-modal" class="modal" hidden>
+    <div class="modal-card">
+      <h2>Settings</h2>
+      <p>
+        This scratchpad is stored in the
+        <a href="https://github.com/Jnrobox/scrpad" target="_blank" rel="noopener">Jnrobox/scrpad</a>
+        GitHub repository. To save and sync across devices, paste a fine-grained
+        GitHub Personal Access Token with <strong>Contents: Read &amp; Write</strong>
+        permission for that repository.
+      </p>
+      <ol>
+        <li>GitHub → Settings → Developer settings → Fine-grained personal access tokens</li>
+        <li>Create a token scoped to <code>Jnrobox/scrpad</code> with Contents: Read and Write</li>
+        <li>Paste it below</li>
+      </ol>
+      <input type="password" id="token-input" placeholder="github_pat_…" autocomplete="off" spellcheck="false">
+      <div class="modal-actions">
+        <button id="settings-save" class="btn primary">Save token</button>
+        <button id="settings-remove" class="btn">Remove token</button>
+        <button id="settings-close" class="btn">Close</button>
+      </div>
+      <p class="hint">The token is stored only in this browser's localStorage and is sent only to api.github.com.</p>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.js"></script>
+  <script src="storage.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
