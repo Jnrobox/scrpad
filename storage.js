@@ -35,11 +35,14 @@
   /**
    * Fetch the note from the repo.
    * Returns { notModified: true } | { note: object|null, sha: string|null }.
-   * A 404 (note file missing) yields { note: null, sha: null }.
+   * A 404 (note file missing, or private repo without token) yields
+   * { note: null, sha: null }.
    * Conditional requests with ETag keep us within GitHub's rate limits.
    */
   async function fetchNote(force) {
     var headers = { Accept: 'application/vnd.github+json' };
+    var token = getToken();
+    if (token) headers.Authorization = 'Bearer ' + token;
     var etag = localStorage.getItem(ETAG_KEY);
     if (!force && etag) headers['If-None-Match'] = etag;
 
