@@ -41,7 +41,12 @@ python3 -m http.server 8080   # then open http://localhost:8080
 ```
 
 # NOTES
-use in the vscode terminal
+
+Use in the VS Code terminal:
+
+```sh
 git status
 git pull
 git push
+```
+
