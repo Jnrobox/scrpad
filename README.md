@@ -12,9 +12,10 @@ https://jnrobox.github.io/scrpad
   (editor powered by [Quill](https://quilljs.com/) via CDN)
 - The note is `{ "timestamp": …, "html": … }` stored through one of two
   pluggable backends, selected per browser in ⚙ Settings:
-  - **GitHub** — `note.json` in this repository. Reads via the GitHub
-    Contents REST API (anonymous); writes need a fine-grained GitHub
-    Personal Access Token (Contents: Read & Write, scoped to this repo).
+  - **GitHub** — `note.json` on the `data` branch of this repository
+    (a dedicated branch, so app saves never churn `main`). Reads via the
+    GitHub Contents REST API (anonymous); writes need a fine-grained
+    GitHub Personal Access Token (Contents: Read & Write, scoped to this repo).
   - **Firebase** — a JSON node in a Firebase Realtime Database. No
     credentials: the secret URL path is the access control (free Firebase
     project → Realtime Database → lock rules to a random secret path →

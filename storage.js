@@ -1,8 +1,10 @@
 /* scrpad storage: pluggable backends storing the note { timestamp, html }.
  *
  * Backends (selected in ⚙ Settings, stored in localStorage per browser):
- *  - GitHubStorage — note.json via the GitHub Contents REST API
- *    (read: anonymous or with token; write: needs a fine-grained PAT)
+ *  - GitHubStorage — note.json on the `data` branch via the GitHub Contents
+ *    REST API (read: anonymous or with token; write: needs a fine-grained PAT).
+ *    Using a dedicated branch keeps `main` static: app saves no longer
+ *    advance `main`, so code pushes are never rejected as non-fast-forward.
  *  - FirebaseStorage — raw JSON node via Firebase Realtime Database REST
  *    (no credentials: the secret URL path is the access control)
  *
@@ -38,6 +40,8 @@
   var GitHubStorage = {
     name: 'github',
     apiUrl: 'https://api.github.com/repos/Jnrobox/scrpad/contents/note.json',
+    // App saves go to a dedicated branch so `main` stays clean.
+    branch: 'data',
 
     getToken: function () {
       return localStorage.getItem(TOKEN_KEY) || '';
@@ -62,7 +66,7 @@
       var etag = localStorage.getItem(ETAG_KEY);
       if (!force && etag) headers['If-None-Match'] = etag;
 
-      var res = await fetch(this.apiUrl, { headers: headers, cache: 'no-store' });
+      var res = await fetch(this.apiUrl + '?ref=' + this.branch, { headers: headers, cache: 'no-store' });
 
       if (res.status === 304) return { notModified: true };
       if (res.status === 404) return { note: null, etag: null };
@@ -90,6 +94,7 @@
       var body = {
         message: 'scrpad: update note (' + new Date().toISOString() + ')',
         content: utf8ToBase64(JSON.stringify(note)),
+        branch: this.branch,
       };
       if (sha) body.sha = sha;
 
