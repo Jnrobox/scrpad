@@ -17,7 +17,8 @@
   </header>
 
   <div id="readonly-banner" class="banner" hidden>
-    Read-only mode — add a GitHub token in ⚙ Settings to enable saving and cross-device sync.
+    Read-only mode — open ⚙ Settings, choose a storage backend and configure it
+    to enable saving and cross-device sync.
   </div>
 
   <main class="sheet">
@@ -49,25 +50,46 @@
   <div id="settings-modal" class="modal" hidden>
     <div class="modal-card">
       <h2>Settings</h2>
-      <p>
-        This scratchpad is stored in the
-        <a href="https://github.com/Jnrobox/scrpad" target="_blank" rel="noopener">Jnrobox/scrpad</a>
-        GitHub repository. To save and sync across devices, paste a fine-grained
-        GitHub Personal Access Token with <strong>Contents: Read &amp; Write</strong>
-        permission for that repository.
-      </p>
-      <ol>
-        <li>GitHub → Settings → Developer settings → Fine-grained personal access tokens</li>
-        <li>Create a token scoped to <code>Jnrobox/scrpad</code> with Contents: Read and Write</li>
-        <li>Paste it below</li>
-      </ol>
-      <input type="password" id="token-input" placeholder="github_pat_…" autocomplete="off" spellcheck="false">
+
+      <label class="field-label" for="backend-select">Storage backend</label>
+      <select id="backend-select">
+        <option value="github">GitHub repository (Jnrobox/scrpad)</option>
+        <option value="firebase">Firebase Realtime Database</option>
+      </select>
+
+      <div id="github-settings">
+        <p>
+          The note is stored in the
+          <a href="https://github.com/Jnrobox/scrpad" target="_blank" rel="noopener">Jnrobox/scrpad</a>
+          GitHub repository. To save and sync across devices, paste a fine-grained
+          GitHub Personal Access Token with <strong>Contents: Read &amp; Write</strong>
+          permission for that repository.
+        </p>
+        <ol>
+          <li>GitHub → Settings → Developer settings → Fine-grained personal access tokens</li>
+          <li>Create a token scoped to <code>Jnrobox/scrpad</code> with Contents: Read and Write</li>
+          <li>Paste it below</li>
+        </ol>
+        <label class="field-label" for="token-input">GitHub token</label>
+        <input type="password" id="token-input" placeholder="github_pat_…" autocomplete="off" spellcheck="false">
+      </div>
+
+      <div id="firebase-settings" hidden>
+        <p>
+          The note is stored as a JSON node in a Firebase Realtime Database.
+          Paste the note URL below — its secret path is the only credential
+          needed (Firebase console → Realtime Database → Data → the node URL).
+        </p>
+        <label class="field-label" for="firebase-url-input">Firebase note URL</label>
+        <input type="url" id="firebase-url-input" placeholder="https://…/scrpad-xxxxxxxxxxxx/note.json" autocomplete="off" spellcheck="false">
+      </div>
+
       <div class="modal-actions">
-        <button id="settings-save" class="btn primary">Save token</button>
-        <button id="settings-remove" class="btn">Remove token</button>
+        <button id="settings-save" class="btn primary">Save settings</button>
+        <button id="settings-remove" class="btn">Remove credentials</button>
         <button id="settings-close" class="btn">Close</button>
       </div>
-      <p class="hint">The token is stored only in this browser's localStorage and is sent only to api.github.com.</p>
+      <p class="hint">Settings are stored only in this browser's localStorage. Use the same backend on every device to see the same note.</p>
     </div>
   </div>
 

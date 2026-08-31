@@ -109,13 +109,23 @@ body {
 .modal-card a { color: #0969da; }
 .modal-card code { background: #eff1f3; padding: 1px 5px; border-radius: 4px; }
 
-#token-input {
+#token-input,
+#firebase-url-input,
+#backend-select {
   width: 100%;
   padding: 8px 10px;
   border: 1px solid #d0d7de;
   border-radius: 6px;
   font-size: 14px;
   margin: 8px 0 12px;
+  background: #fff;
+}
+
+.field-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #424a53;
 }
 
 .modal-actions { display: flex; gap: 8px; flex-wrap: wrap; }

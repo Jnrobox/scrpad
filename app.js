@@ -8,10 +8,25 @@
 
   var Storage = window.ScrpadStorage;
 
+  var BACKEND_KEY = 'scrpad_backend';
+  var ETAG_KEY = 'scrpad_etag';
+
   var statusEl = document.getElementById('status');
   var bannerEl = document.getElementById('readonly-banner');
   var modalEl = document.getElementById('settings-modal');
   var tokenInput = document.getElementById('token-input');
+  var backendSelect = document.getElementById('backend-select');
+  var firebaseUrlInput = document.getElementById('firebase-url-input');
+  var githubSettingsEl = document.getElementById('github-settings');
+  var firebaseSettingsEl = document.getElementById('firebase-settings');
+
+  function getBackendName() {
+    return localStorage.getItem(BACKEND_KEY) === 'firebase' ? 'firebase' : 'github';
+  }
+
+  function getBackend() {
+    return Storage[getBackendName()];
+  }
 
   var currentSha = null;   // sha of the note file we last read/wrote
   var suppressChange = false;
@@ -78,7 +93,7 @@
   }
 
   function updateBanner() {
-    bannerEl.hidden = !!Storage.getToken();
+    bannerEl.hidden = getBackend().isConfigured();
   }
 
   function cacheNote(note) {
@@ -112,15 +127,16 @@
 
   async function doSave() {
     if (!dirty) return;
-    if (!Storage.getToken()) {
+    var backend = getBackend();
+    if (!backend.isConfigured()) {
       cacheCurrentNote();
-      setStatus('Saved locally — add a token in ⚙ Settings to sync', 'local');
+      setStatus('Saved locally — open ⚙ Settings to configure sync', 'local');
       return;
     }
     var note = { timestamp: new Date().toISOString(), html: quill.root.innerHTML };
     setStatus('Saving…', 'saving');
     try {
-      currentSha = await Storage.saveNote(note, currentSha);
+      currentSha = await backend.saveNote(note, currentSha);
       dirty = false;
       cacheNote(note);
       setStatus('Saved ✓', 'saved');
@@ -136,17 +152,18 @@
 
   async function resolveConflict(note) {
     try {
-      var remote = await Storage.fetchNote(true);
+      var backend = getBackend();
+      var remote = await backend.fetchNote(true);
       var remoteTs = (remote.note && remote.note.timestamp) || '';
       if (!remoteTs || remoteTs < note.timestamp) {
         // Local edit is newer: overwrite the older remote version.
-        currentSha = await Storage.saveNote(note, remote.sha);
+        currentSha = await backend.saveNote(note, remote.etag);
         dirty = false;
         cacheNote(note);
         setStatus('Saved ✓', 'saved');
       } else {
         // Remote is newer: last write wins, accept the remote version.
-        currentSha = remote.sha;
+        currentSha = remote.etag;
         dirty = false;
         applyNote(remote.note);
         cacheNote(remote.note);
@@ -161,40 +178,58 @@
   async function refreshFromRemote(force) {
     if (dirty || document.hidden) return;
     try {
-      var res = await Storage.fetchNote(force);
+      var res = await getBackend().fetchNote(force);
       if (res.notModified) return;
-      currentSha = res.sha;
+      currentSha = res.etag;
       if (!res.note) return;
       var cached = null;
       try { cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null'); } catch (e) { /* ignore */ }
       if (!cached || (res.note.timestamp || '') !== (cached.timestamp || '')) {
         applyNote(res.note);
         cacheNote(res.note);
-        setStatus('Updated from GitHub ✓', 'saved');
+        setStatus('Updated from remote ✓', 'saved');
       }
     } catch (err) { /* offline — keep showing cached content */ }
   }
 
   // ---------- Settings modal ----------
+  function showSettingsSections() {
+    var isFirebase = backendSelect.value === 'firebase';
+    githubSettingsEl.hidden = isFirebase;
+    firebaseSettingsEl.hidden = !isFirebase;
+  }
+
   document.getElementById('settings-btn').addEventListener('click', function () {
-    tokenInput.value = Storage.getToken();
+    backendSelect.value = getBackendName();
+    tokenInput.value = Storage.github.getToken();
+    firebaseUrlInput.value = Storage.firebase.getUrl();
+    showSettingsSections();
     modalEl.hidden = false;
-    tokenInput.focus();
   });
+
+  backendSelect.addEventListener('change', showSettingsSections);
 
   document.getElementById('settings-close').addEventListener('click', function () {
     modalEl.hidden = true;
   });
 
   document.getElementById('settings-save').addEventListener('click', function () {
-    Storage.setToken(tokenInput.value.trim());
+    var previousBackend = getBackendName();
+    Storage.github.setToken(tokenInput.value.trim());
+    Storage.firebase.setUrl(firebaseUrlInput.value.trim());
+    localStorage.setItem(BACKEND_KEY, backendSelect.value === 'firebase' ? 'firebase' : 'github');
+    if (previousBackend !== getBackendName()) {
+      localStorage.removeItem(ETAG_KEY); // cached ETag belongs to the old backend
+      currentSha = null;
+    }
     updateBanner();
     modalEl.hidden = true;
     if (dirty) doSave();
   });
 
   document.getElementById('settings-remove').addEventListener('click', function () {
-    Storage.setToken('');
+    Storage.github.setToken('');
+    Storage.firebase.setUrl('');
     updateBanner();
     modalEl.hidden = true;
   });
