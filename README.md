@@ -42,11 +42,10 @@ python3 -m http.server 8080   # then open http://localhost:8080
 
 # NOTES
 
-Use in the VS Code terminal:
-
+use in the vscode terminal:
 ```sh
 git status
+git add -A && git commit -m "Commit msg"
 git pull
 git push
 ```
-
