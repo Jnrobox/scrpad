@@ -38,6 +38,16 @@ body {
 .status.error { color: #ff8182; }
 .status.local { color: #9ecbff; }
 
+/* Last-edit indicator in the top bar */
+.last-updated {
+  font-size: 12px;
+  color: #9da7b3;
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .last-updated { display: none; }
+}
+
 .btn {
   border: 1px solid rgba(255, 255, 255, 0.35);
   background: transparent;

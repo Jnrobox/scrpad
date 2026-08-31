@@ -19,6 +19,7 @@
   var firebaseUrlInput = document.getElementById('firebase-url-input');
   var githubSettingsEl = document.getElementById('github-settings');
   var firebaseSettingsEl = document.getElementById('firebase-settings');
+  var lastUpdatedEl = document.getElementById('last-updated');
 
   function getBackendName() {
     return localStorage.getItem(BACKEND_KEY) === 'firebase' ? 'firebase' : 'github';
@@ -96,6 +97,37 @@
     bannerEl.hidden = getBackend().isConfigured();
   }
 
+  // ---------- Last-edit indicator ----------
+  var lastUpdatedIso = '';
+
+  function formatTimeAgo(iso) {
+    var t = new Date(iso).getTime();
+    if (isNaN(t)) return '';
+    var diff = (Date.now() - t) / 1000; // seconds ago
+    if (diff < 5) return 'just now';
+    if (diff < 60) return Math.floor(diff) + ' s ago';
+    if (diff < 3600) return Math.floor(diff / 60) + ' min ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + ' h ago';
+    return new Date(iso).toLocaleString();
+  }
+
+  function renderLastUpdated() {
+    if (!lastUpdatedIso) {
+      lastUpdatedEl.hidden = true;
+      return;
+    }
+    lastUpdatedEl.hidden = false;
+    lastUpdatedEl.textContent = 'Last edit: ' + formatTimeAgo(lastUpdatedIso);
+  }
+
+  function setLastUpdated(iso) {
+    lastUpdatedIso = iso || '';
+    renderLastUpdated();
+  }
+
+  // Keep the "N min ago" label fresh even when nothing is being saved.
+  setInterval(renderLastUpdated, 30000);
+
   function cacheNote(note) {
     try {
       localStorage.setItem(CACHE_KEY, JSON.stringify(note));
@@ -130,6 +162,7 @@
     var backend = getBackend();
     if (!backend.isConfigured()) {
       cacheCurrentNote();
+      setLastUpdated(new Date().toISOString());
       setStatus('Saved locally — open ⚙ Settings to configure sync', 'local');
       return;
     }
@@ -139,12 +172,14 @@
       currentSha = await backend.saveNote(note, currentSha);
       dirty = false;
       cacheNote(note);
+      setLastUpdated(note.timestamp);
       setStatus('Saved ✓', 'saved');
     } catch (err) {
       if (err.conflict) {
         await resolveConflict(note);
       } else {
         cacheCurrentNote();
+        setLastUpdated(note.timestamp);
         setStatus('Offline — saved locally', 'error');
       }
     }
@@ -160,6 +195,7 @@
         currentSha = await backend.saveNote(note, remote.etag);
         dirty = false;
         cacheNote(note);
+        setLastUpdated(note.timestamp);
         setStatus('Saved ✓', 'saved');
       } else {
         // Remote is newer: last write wins, accept the remote version.
@@ -167,6 +203,7 @@
         dirty = false;
         applyNote(remote.note);
         cacheNote(remote.note);
+        setLastUpdated(remote.note.timestamp || '');
         setStatus('Synced — newer version from another device loaded', 'saved');
       }
     } catch (err2) {
@@ -187,6 +224,7 @@
       if (!cached || (res.note.timestamp || '') !== (cached.timestamp || '')) {
         applyNote(res.note);
         cacheNote(res.note);
+        setLastUpdated(res.note.timestamp || '');
         setStatus('Updated from remote ✓', 'saved');
       }
     } catch (err) { /* offline — keep showing cached content */ }
@@ -249,6 +287,7 @@
       var cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
       if (cached && cached.html) {
         applyNote(cached);
+        setLastUpdated(cached.timestamp || '');
         setStatus('Loaded from cache…', '');
       }
     } catch (e) { /* corrupt cache — start empty */ }
