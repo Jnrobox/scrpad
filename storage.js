@@ -93,7 +93,9 @@
 
       var body = {
         message: 'scrpad: update note (' + new Date().toISOString() + ')',
-        content: utf8ToBase64(JSON.stringify(note)),
+        // Pretty-printed so the file stays hand-editable in the GitHub web UI
+        // (see the ✎ Edit on GitHub link); readers just JSON.parse() it back.
+        content: utf8ToBase64(JSON.stringify(note, null, 2)),
         branch: this.branch,
       };
       if (sha) body.sha = sha;
@@ -108,7 +110,12 @@
         body: JSON.stringify(body),
       });
 
-      if (res.status === 409) {
+      if (res.status === 409 || res.status === 422) {
+        // 409 = the sha we sent is stale (another save won the race).
+        // 422 = we saved without a sha because the initial read failed (e.g.
+        // the page loaded offline) and the file already exists on the branch.
+        // Both resolve the same way: refetch, then last-write-wins by
+        // timestamp — instead of looping "Offline — saved locally" forever.
         var err = new Error('Conflict: the note changed on the server.');
         err.conflict = true;
         throw err;

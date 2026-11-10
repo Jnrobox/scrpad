@@ -20,6 +20,7 @@
   var githubSettingsEl = document.getElementById('github-settings');
   var firebaseSettingsEl = document.getElementById('firebase-settings');
   var lastUpdatedEl = document.getElementById('last-updated');
+  var editOnGitHubEl = document.getElementById('edit-on-github-btn');
 
   function getBackendName() {
     return localStorage.getItem(BACKEND_KEY) === 'firebase' ? 'firebase' : 'github';
@@ -95,6 +96,14 @@
 
   function updateBanner() {
     bannerEl.hidden = getBackend().isConfigured();
+  }
+
+  // The ✎ Edit on GitHub link only makes sense when the note lives in this
+  // repo's `data` branch (GitHub backend). It stays visible even without a
+  // token (read-only mode): editing via github.com's web UI is precisely the
+  // workaround for networks that block api.github.com writes.
+  function updateEditLink() {
+    editOnGitHubEl.hidden = getBackendName() !== 'github';
   }
 
   // ---------- Last-edit indicator ----------
@@ -216,18 +225,31 @@
     if (dirty || document.hidden) return;
     try {
       var res = await getBackend().fetchNote(force);
-      if (res.notModified) return;
+      if (res.notModified) { setStatus('Up to date ✓', 'saved'); return; }
       currentSha = res.etag;
-      if (!res.note) return;
+      if (!res.note) { setStatus('Up to date — remote is empty', 'saved'); return; }
       var cached = null;
       try { cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null'); } catch (e) { /* ignore */ }
-      if (!cached || (res.note.timestamp || '') !== (cached.timestamp || '')) {
+      // Compare content, not just timestamps: hand edits via the GitHub web
+      // UI (✎ Edit on GitHub) can change html without bumping timestamp —
+      // those must still propagate.
+      var same = !!cached
+        && (cached.timestamp || '') === (res.note.timestamp || '')
+        && (cached.html || '') === (res.note.html || '');
+      if (!same) {
         applyNote(res.note);
         cacheNote(res.note);
         setLastUpdated(res.note.timestamp || '');
         setStatus('Updated from remote ✓', 'saved');
+      } else {
+        setStatus('Up to date ✓', 'saved');
       }
-    } catch (err) { /* offline — keep showing cached content */ }
+    } catch (err) {
+      // Keep showing the cached note, but say so in red. A silent catch here
+      // once masqueraded as "Loaded from cache…" — indistinguishable from
+      // "GitHub was never asked" — and cost us a confusing debugging session.
+      setStatus('Sync failed — ' + err.message, 'error');
+    }
   }
 
   // ---------- Settings modal ----------
@@ -261,6 +283,7 @@
       currentSha = null;
     }
     updateBanner();
+    updateEditLink();
     modalEl.hidden = true;
     if (dirty) doSave();
   });
@@ -283,6 +306,7 @@
   // ---------- Init ----------
   function init() {
     updateBanner();
+    updateEditLink();
     try {
       var cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
       if (cached && cached.html) {

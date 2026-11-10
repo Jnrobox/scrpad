@@ -3,8 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>scrpad</title>
+  <title>Scrpad</title>
   <meta name="description" content="Simple scratchpad with text and images, synced across devices.">
+  <script>
+    // scrpad identity — logged on every load so the console tells you exactly
+    // which version the browser is running (bump AppVersionStr when deploying).
+    // For local debug use: python3 -m http.server 8080 (http://localhost:8080)
+    const AppTitleStr = "Scrpad";
+    const AppVersionStr = "2026-11-10";
+    console.log(AppTitleStr + ' (ver. ' + AppVersionStr + ')');
+  </script>
   <link rel="icon" href="favicon.ico">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.snow.css">
   <link rel="stylesheet" href="styles.css">
@@ -14,6 +22,7 @@
     <span class="brand">📝 scrpad</span>
     <span id="status" class="status">Loading…</span>
     <span id="last-updated" class="last-updated" hidden></span>
+    <a id="edit-on-github-btn" class="btn" href="https://github.com/Jnrobox/scrpad/edit/data/note.json" target="_blank" rel="noopener" title="Edit note.json on GitHub (data branch) — the write path that works on restricted networks" hidden>✎ Edit on GitHub</a>
     <button id="settings-btn" class="btn" title="GitHub token settings">⚙ Settings</button>
   </header>
 

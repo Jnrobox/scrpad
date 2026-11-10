@@ -22,7 +22,15 @@ https://jnrobox.github.io/scrpad
     paste the note URL into ⚙ Settings).
 - Autosave: debounced (1 s), with localStorage cache for offline/instant load
 - Sync: refresh on tab focus + every 60 s; conflicts detected via ETag
-  conditional requests and resolved last-write-wins by timestamp
+  conditional requests and resolved last-write-wins by timestamp. The status
+  line is honest about what happened: green when the remote was checked and
+  is current, red "Sync failed…" when the backend is unreachable
+- ✎ Edit on GitHub (top bar, GitHub backend): edit `note.json` on the `data`
+  branch through the GitHub web UI — the write path that also works on
+  restricted networks (where api.github.com writes are blocked and the app
+  is read-only). Any change to the `html` or `timestamp` field shows up in
+  the app on the next focus/60 s refresh; note.json is saved pretty-printed
+  to keep hand edits sane
 - Use the same backend on every device to see the same note
 
 # Deploy
@@ -45,7 +53,7 @@ python3 -m http.server 8080   # then open http://localhost:8080
 use in the vscode terminal:
 ```sh
 git status
-git add -A && git commit -m "Commit msg"
+git add -A && git commit -m "New commit msg"
 git pull
 git push
 ```
